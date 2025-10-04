@@ -19,12 +19,10 @@ app.use(express.json());
 // });
 
 app.get("/", (req, res) => {
-  res
-    .status(200)
-    .json({
-      status: "OK",
-      message: "Hello, this is the backend with Prisma 🚀",
-    });
+  res.status(200).json({
+    status: "OK",
+    message: "Hello, this is the backend with Prisma 🚀",
+  });
 });
 
 app.get("/users", async (req, res) => {
@@ -39,10 +37,12 @@ app.get("/users", async (req, res) => {
 
 app.post("/users", async (req, res) => {
   try {
-    const { name, email, age, salary, status } = req.body;
+    const { name, email, age, salary, job, status } = req.body;
+
     const newUser = await prisma.user.create({
-      data: { name, email, age, salary, status },
+      data: { name, email, age, salary, job, status },
     });
+    
     res.status(201).json(newUser);
   } catch (err) {
     console.error(err);

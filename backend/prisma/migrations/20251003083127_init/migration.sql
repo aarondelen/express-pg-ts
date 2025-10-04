@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "Status" AS ENUM ('ACTIVE', 'INACTIVE');
+CREATE TYPE "EmploymentStatus" AS ENUM ('EMPLOYED', 'TERMINATED', 'PROBATION');
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -8,7 +8,8 @@ CREATE TABLE "User" (
     "email" TEXT NOT NULL,
     "age" INTEGER,
     "salary" DOUBLE PRECISION,
-    "status" "Status" NOT NULL DEFAULT 'ACTIVE',
+    "job" TEXT,
+    "status" "EmploymentStatus" NOT NULL,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
