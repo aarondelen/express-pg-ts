@@ -10,14 +10,6 @@ const prisma = new PrismaClient();
 app.use(cors());
 app.use(express.json());
 
-// const pool = new Pool({  // PostgreSQL connection settings
-//   host: process.env.DB_HOST,
-//   user: process.env.DB_USER,
-//   password: process.env.DB_PASSWORD,
-//   database: process.env.DB_NAME,
-//   port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432,
-// });
-
 app.get("/", (req, res) => {
   res.status(200).json({
     status: "OK",
@@ -27,7 +19,11 @@ app.get("/", (req, res) => {
 
 app.get("/users", async (req, res) => {
   try {
-    const users = await prisma.user.findMany();
+    const users = await prisma.user.findMany({
+      orderBy: {
+        id: "asc",
+      },
+    });
     res.status(200).json(users);
   } catch (err) {
     console.error(err);
@@ -40,9 +36,9 @@ app.post("/users", async (req, res) => {
     const { name, email, age, salary, job, status } = req.body;
 
     const newUser = await prisma.user.create({
-      data: { name, email, age, salary, job, status },
+      data: { name, email, age: age ? Number(age) : null, salary: salary ? Number(salary) : null, job: job || null, status },
     });
-    
+
     res.status(201).json(newUser);
   } catch (err) {
     console.error(err);
@@ -50,7 +46,33 @@ app.post("/users", async (req, res) => {
   }
 });
 
-// const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;  // Default to 3000 if PORT is not set (For TYPESCRIPT)
+app.delete("/users/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    await prisma.user.delete({ where: { id } });
+    res.status(200).json({ message: "User deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to delete user" });
+  }
+});
+
+app.put("/users/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const { name, email, age, salary, job, status } = req.body;
+
+   const updatedUser = await prisma.user.update({
+      where: { id },
+      data: { name, email, age, salary, job, status },
+    });
+
+    res.status(200).json(updatedUser);
+  } catch (err) {
+    console.error("PUT /users/:id error",err);
+    res.status(500).json({ error: "Failed to update user" });
+  }
+});
 
 const port = process.env.PORT || 3000;
 app.listen(port, () =>

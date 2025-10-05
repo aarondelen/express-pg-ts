@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import api from "../lib/api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const AddEmployeeModal = () => {
+  const queryClient = useQueryClient();
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -11,27 +14,63 @@ const AddEmployeeModal = () => {
     status: "EMPLOYED",
   });
 
-  const handleChange = (e : React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({...formData, [e.target.name]: e.target.value});
+  const { mutate } = useMutation({
+    mutationFn: async () => {
+      return await api.post("/users", {
+        ...formData,
+        age: formData.age ? Number(formData.age) : null,
+        salary: formData.salary ? Number(formData.salary) : null,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] }); // Refetch data
+      setFormData({
+        name: "",
+        email: "",
+        job: "",
+        age: "",
+        salary: "",
+        status: "EMPLOYED",
+      });
+      const modal = document.getElementById(
+        "add-employee-modal"
+      ) as HTMLDialogElement;
+      modal?.close();
+    },
+  });
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      email: "",
+      job: "",
+      age: "",
+      salary: "",
+      status: "EMPLOYED",
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    try {
-      await api.post("/users", {
-        ...formData,
-        age: formData.age ? Number(formData.age) : null,
-        salary: formData.salary ? Number(formData.salary) : null,
-
-      });
-      const modal = document.getElementById("add-employee-modal") as HTMLDialogElement;
-      modal?.close();
-
-    } catch (err) {
-      console.error("Error creating employees", err);
-    }
+    mutate();
   };
+
+  useEffect(() => {
+    const modal = document.getElementById(
+      "add-employee-modal"
+    ) as HTMLDialogElement;
+
+    const handleClose = () => resetForm();
+
+    modal.addEventListener("close", handleClose);
+    return () => modal.removeEventListener("close", handleClose);
+  }, []);
 
   return (
     <>
