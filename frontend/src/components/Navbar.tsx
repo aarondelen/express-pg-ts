@@ -1,13 +1,25 @@
+import { useState } from "react";
 import AddEmployeeModal from "../modal/AddEmployeeModal";
 
-const Navbar = () => {
+type NavbarProps = {
+  onSearch: (value: string) => void;
+}
+
+const Navbar = ({onSearch}: NavbarProps) => {
+  const [searchValue, setSearchValue] = useState("");
+
+  const handleSearchChange = (e : React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchValue(value);
+    onSearch(value);
+  };
+
   const handleOpenAddModal = () => {
     const modal = document.getElementById("add-employee-modal") as HTMLDialogElement;
     modal?.showModal();
   };
 
   return (
-
     <>
       <div className="navbar bg-base-100 shadow-sm justify-between mb-12">
         <div className="logo">
@@ -17,7 +29,9 @@ const Navbar = () => {
         <div className="flex flex-1 gap-2">
           <input
             type="text"
-            placeholder="Search"
+            placeholder="Search by name..."
+            value={searchValue}
+            onChange={handleSearchChange}
             className="input input-bordered max-w-3xl m-auto"
           />
         </div>

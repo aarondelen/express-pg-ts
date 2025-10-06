@@ -19,7 +19,17 @@ app.get("/", (req, res) => {
 
 app.get("/users", async (req, res) => {
   try {
+    const search = req.query.search?.toString() || "";
+
     const users = await prisma.user.findMany({
+      where: search
+        ? {
+            name: {
+              contains: search,
+              mode: "insensitive",
+            },
+          }
+        : {},
       orderBy: {
         id: "asc",
       },
@@ -36,7 +46,14 @@ app.post("/users", async (req, res) => {
     const { name, email, age, salary, job, status } = req.body;
 
     const newUser = await prisma.user.create({
-      data: { name, email, age: age ? Number(age) : null, salary: salary ? Number(salary) : null, job: job || null, status },
+      data: {
+        name,
+        email,
+        age: age ? Number(age) : null,
+        salary: salary ? Number(salary) : null,
+        job: job || null,
+        status,
+      },
     });
 
     res.status(201).json(newUser);
@@ -62,14 +79,14 @@ app.put("/users/:id", async (req, res) => {
     const id = Number(req.params.id);
     const { name, email, age, salary, job, status } = req.body;
 
-   const updatedUser = await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { id },
       data: { name, email, age, salary, job, status },
     });
 
     res.status(200).json(updatedUser);
   } catch (err) {
-    console.error("PUT /users/:id error",err);
+    console.error("PUT /users/:id error", err);
     res.status(500).json({ error: "Failed to update user" });
   }
 });

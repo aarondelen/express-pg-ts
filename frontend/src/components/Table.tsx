@@ -1,9 +1,9 @@
 import api from "../lib/api";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import DeleteEmployeeModal from "../modal/DeleteEmployeeModal";
 import EditEmployeeModal from "../modal/EditEmployeeModal";
 import { useState } from "react";
-
+import { useDebounce } from "use-debounce";
 type TableProps = {
   id: number;
   name: string;
@@ -14,17 +14,22 @@ type TableProps = {
   status: "EMPLOYED" | "TERMINATED" | "PROBATION";
 };
 
-const Table = () => {
+const Table = ({searchTerm}: {searchTerm: string}) => {
+  const [debouncedSearch] = useDebounce(searchTerm, 300); // debounce 300ms
+
   const {
     data: users = [],
     isLoading,
     isError,
   } = useQuery<TableProps[]>({
-    queryKey: ["users"],
+    queryKey: ["users", debouncedSearch],
     queryFn: async () => {
-      const res = await api.get("/users");
+      const res = await api.get("/users", {
+        params: { search: debouncedSearch },
+      });
       return res.data;
     },
+    placeholderData: keepPreviousData,
   });
 
   const [selectedEmployee, setSelectedEmployee] = useState<TableProps | null>(
@@ -35,7 +40,7 @@ const Table = () => {
   const [selectedForEdit, setSelectedForEdit] = useState<TableProps | null>(
     null
   ); // Edit Modal
-  const [isEditOpen, setIsEditOpen] = useState(false); // Edit Modal
+  const [_, setIsEditOpen] = useState(false); // Edit Modal
 
   const openDeleteModal = (employee: TableProps) => {
     setSelectedEmployee(employee);
@@ -138,10 +143,7 @@ const Table = () => {
         onClose={closeDeleteModal}
       />
 
-      <EditEmployeeModal
-        employee={selectedForEdit}
-        onClose={closeEditModal}
-      />
+      <EditEmployeeModal employee={selectedForEdit} onClose={closeEditModal} />
     </>
   );
 };
